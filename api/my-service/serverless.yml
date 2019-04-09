@@ -1,0 +1,25 @@
+service: GetExchangeAPI # NOTE: update this with your service name
+
+custom:
+  tableName: 'temp'
+
+provider:
+  name: aws
+  stage: dev
+  runtime: nodejs8.10
+  region: ap-southeast-1
+  environment:
+    USERS_TABLE: ${self:custom.tableName}
+
+functions:
+  app:
+    handler: index.handler
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+        method: OPTIONS
+        cors: true
+
+plugins:
+  - serverless-offline
+
