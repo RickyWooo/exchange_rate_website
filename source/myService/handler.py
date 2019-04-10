@@ -1,3 +1,4 @@
+import json
 import re
 import json
 import requests
@@ -135,3 +136,7 @@ def main():
 #describeRawData()
 #putItem()
 #main()
+
+def crawler(event, context):
+    main()
+    return 0

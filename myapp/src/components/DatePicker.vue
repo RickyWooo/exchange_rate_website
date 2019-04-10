@@ -1,7 +1,5 @@
 <template>
   <div id="app">
-    <div class="mt-3">Selected: <strong>{{ chartData }}</strong></div>
-
     <div style="float: left; padding: 15px;">
       <b-form-select id="form_selected" v-model="bank_selected" :options="bank_options" class="mb-2">
         <template slot="first">
@@ -16,7 +14,6 @@
           <option :value="null" disabled>-- Please select currency --</option>
         </template>
       </b-form-select>
-      <div class="mt-3">Selected: <strong>{{ currenecy_selected }}</strong></div>
     </div>
 
     <div style="float: left;" class="datepicker" >
@@ -31,8 +28,8 @@
       <br>
       <br>
       <br>
-      <span>  {{ info }}</span>
-      <strong> {{band_info}} </strong>
+      <br>
+      <strong style="color:red"> {{chartData.rows}} </strong>
     </div>
     <div class="chart">
       <div>
@@ -60,7 +57,6 @@ const state = {
 };
 
 export default {
-  componentKey: 0,
   name: "DatePicker",
   components: {
     Datepicker
@@ -70,10 +66,11 @@ export default {
       chartData: {
         columns: ['日期', '即期買匯', '現金買匯', '即期賣匯', '現金賣匯' ],
         rows: [
-          { '日期': '1/1', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
-          { '日期': '1/2', '即期買匯': 3530, '現金買匯': 3230, '即期賣匯': 3000,'現金賣匯':2500 },
+          { '日期': '2019-02-01', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
+          { '日期': '2019-03-01', '即期買匯': 3530, '現金買匯': 3230, '即期賣匯': 3000,'現金賣匯':2500 },
         ]
       },
+      componentKey: 0,
       FromDate:null,
       ToDate:null,
       bank_selected: null,
@@ -103,41 +100,22 @@ export default {
         { value: 'VND', text: '越南幣[VND]' },
         { value: 'CNY', text: '人民幣[CNY]' },
       ],
-      info: null,
-      band_info: 'this is bank info',
       currency:'',
-      format: "d MMMM yyyy",
-      disabledDates: {},
-      disabledFn: {
-        customPredictor(date) {
-          if (date.getDate() % 3 === 0) {
-            return true;
-          }
-        }
-      },
       eventMsg: null,
       state: state,
       vModelExample: null,
       changedMonthLog: []
     };
   },
-  mounted () {
-    axios
-      .get('https://api.coindesk.com/v1/bpi/currentprice.json')
-      .then(response => (this.info = response))
-      .catch(function (error) {
-        console.log(error);
-      })
-  },
   watch: {
-    bank_selected: function(value) {
+    bank_selected: function() {
       if(this.bank_selected != null) {
         this.searchExchangeRate()
       } else {
         //error handling
       }
     },
-    currenecy_selected: function(value){
+    currenecy_selected: function(){
       if(this.currenecy_selected != null) {
         this.searchExchangeRate()
       } else {
@@ -151,18 +129,27 @@ export default {
     },
     submitFromDate: function (event) {
         this.FromDate = moment(event).format('YYYY-MM-DD');
+        this.FromDate = this.fromDateToTimeStamp(this.FromDate)
         this.searchExchangeRate()
     },
     submitToDate: function (event) {
         this.ToDate = moment(event).format('YYYY-MM-DD');
+        this.ToDate = this.toDateToTimeStamp(this.ToDate)
         this.searchExchangeRate()
     },
-    dateToTimeStamp: function(date){
+    fromDateToTimeStamp: function(date){
       let ts = new Date(date).getTime()
-      return ts
+      return ts/1000
     },
+    toDateToTimeStamp: function(date){
+      let ts = new Date(date).getTime()
+      return ts/1000
+    },
+    TimeStampToDate: function(ts){
+      return  moment.unix(ts).format("YYYY-MM-DD");
+    } 
+    ,
     searchExchangeRate: function(){
-      alert('you hit the api')
       //error handling
       // let parameter = [this.bank_selected,this.currenecy_selected,this.FromDate,this.ToDate]
       // parameter.forEach(function(element){
@@ -171,15 +158,25 @@ export default {
       //   }
       // })
 
-      this.FromDate = this.dateToTimeStamp(this.FromDate)
-      this.ToDate = this.dateToTimeStamp(this.ToDate)
-
       let requestURL = `https://f7964ddhdh.execute-api.ap-southeast-1.amazonaws.com/dev/${this.bank_selected}/${this.currenecy_selected}/${this.FromDate}/${this.ToDate}`;
       axios
       .get(requestURL)
       .then((response)=>{
-        console.log(requestURL)
-        this.band_info = response
+        this.chartData.rows = []
+        this.band_info = response.data.Items
+        let raw_data = response.data.Items
+        for (let i=0;i<raw_data.length;i++){
+          //{ '日期': '1/1', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
+          let obj = {}
+          console.log(raw_data[i])
+          obj["日期"] = this.TimeStampToDate(raw_data[i]["transaction_ts"]["N"])
+          obj["即期買匯"] = raw_data[i].exchange_type.M.stock_buy.N
+          obj["現金買匯"] = raw_data[i].exchange_type.M.cash_buy.N
+          obj["即期賣匯"] = raw_data[i].exchange_type.M.stock_sell.N
+          obj["現金賣匯"] = raw_data[i].exchange_type.M.cash_sell.N
+          this.chartData.rows.push(obj)
+          console.log(obj['日期'])
+        }
         this.componentKey += 1;
       })
       .catch(function (error) {
