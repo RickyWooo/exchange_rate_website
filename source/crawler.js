@@ -1,8 +1,5 @@
-const fs = require('fs');
-
-fs.readFile('index.htm', function (err, data) {
-    if (err) throw err;
-    htmlObject = (data.toString());
-    console.log(htmlObject)
-});
-
+const request = require('request')
+const url = 'http://rate.megabank.com.tw/bulletin02_02.asp'
+request(url, (err, res, body) => {
+  console.log(body)
+})

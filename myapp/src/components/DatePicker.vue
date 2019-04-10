@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <div class="mt-3">Selected: <strong>{{ chartData }}</strong></div>
+
     <div style="float: left; padding: 15px;">
       <b-form-select id="form_selected" v-model="bank_selected" :options="bank_options" class="mb-2">
         <template slot="first">
@@ -19,11 +20,11 @@
     </div>
 
     <div style="float: left;" class="datepicker" >
-        <datepicker @selected="submitFromDate" :value="state.date" v-model="state.date" name="from_datepicker" placeholder="--Select From Date--"></datepicker>
+        <datepicker @selected="submitFromDate" :value="state.date" :format="customFormatter" v-model="state.date" name="from_datepicker" placeholder="--Select From Date--"></datepicker>
         <span>{{FromDate}}</span>
     </div>
     <div style="float: left;" class="datepicker" >
-        <datepicker @selected="submitToDate" :value="state.date" v-model="state.date2" name="to_datepicker" placeholder="--Select To Date--"></datepicker>
+        <datepicker @selected="submitToDate" :value="state.date" :format="customFormatter" v-model="state.date2" name="to_datepicker" placeholder="--Select To Date--"></datepicker>
         <span>{{ToDate}}</span>
     </div>
     <div>
@@ -52,6 +53,7 @@
 import Datepicker from "vuejs-datepicker/dist/vuejs-datepicker.esm.js";
 import * as lang from "vuejs-datepicker/src/locale";
 const axios = require('axios');
+const moment = require('moment')
 
 const state = {
   date1: new Date()
@@ -77,12 +79,29 @@ export default {
       bank_selected: null,
       currenecy_selected: null,
       bank_options: [
-        { value: '第一銀行', text: '第一銀行' },
-        { value: '第二銀行', text: '第二銀行' }
+        { value: 'megabank', text: '兆豐銀行' }
       ],
       currenecy_options: [
-        { value: 'USD', text: '美園[USD]' },
-        { value: 'HKD', text: '港幣[HKD]' }
+        { value: 'USD', text: '美金[USD]' },
+        { value: 'HKD', text: '港幣[HKD]' },
+        { value: 'GBP', text: '英鎊[GBP]' },
+        { value: 'JPY', text: '日圓[JPY]' },
+        { value: 'AUD', text: '澳幣[AUD]' },
+        { value: 'CAD', text: '加拿大幣[CAD]' },
+        { value: 'SGD', text: '新加坡幣[SGD]' },
+        { value: 'ZAR', text: '南非幣[ZAR]' },
+        { value: 'CHF', text: '瑞士法郎[CHF]' },
+        { value: 'THB', text: '泰幣[THB]' },
+        { value: 'NZD', text: '紐西蘭幣[NZD]' },
+        { value: 'EUR', text: '歐元[EUR]' },
+        { value: 'SEK', text: '瑞典幣[SEK]' },
+        { value: 'KRW', text: '韓幣[KRW]' },
+        { value: 'MYR', text: '馬來幣[MYR]' },
+        { value: 'IDR', text: '印尼幣[IDR]' },
+        { value: 'PHP', text: '菲律賓幣[PHP]' },
+        { value: 'MOP', text: '澳門幣[MOP]' },
+        { value: 'VND', text: '越南幣[VND]' },
+        { value: 'CNY', text: '人民幣[CNY]' },
       ],
       info: null,
       band_info: 'this is bank info',
@@ -98,8 +117,6 @@ export default {
       },
       eventMsg: null,
       state: state,
-      language: "en",
-      languages: lang,
       vModelExample: null,
       changedMonthLog: []
     };
@@ -115,45 +132,61 @@ export default {
   watch: {
     bank_selected: function(value) {
       if(this.bank_selected != null) {
-        alert('you have changed the bankname right')
-        this.bank_changed()
+        this.searchExchangeRate()
       } else {
-        //this.errMsg = '合法的使用者名稱。';
+        //error handling
+      }
+    },
+    currenecy_selected: function(value){
+      if(this.currenecy_selected != null) {
+        this.searchExchangeRate()
+      } else {
+        //error handling
       }
     }
   },
   methods: {
+    customFormatter(date) {
+      return moment(date).format('YYYY-MM-DD');
+    },
     submitFromDate: function (event) {
-      if (event) {
-        alert(event)
-      }
-      this.FromDate = event;
+        this.FromDate = moment(event).format('YYYY-MM-DD');
+        this.searchExchangeRate()
     },
     submitToDate: function (event) {
-      if (event) {
-        alert(event)
-      }
-      this.ToDate = event;
+        this.ToDate = moment(event).format('YYYY-MM-DD');
+        this.searchExchangeRate()
     },
-    dateToTimeStamp: function(){
-      console.log(this.ToDate)
-      console.log(this.FromDate)
+    dateToTimeStamp: function(date){
+      let ts = new Date(date).getTime()
+      return ts
     },
-    bank_changed: function(){
-      dateToTimeStamp()
+    searchExchangeRate: function(){
+      alert('you hit the api')
+      //error handling
+      // let parameter = [this.bank_selected,this.currenecy_selected,this.FromDate,this.ToDate]
+      // parameter.forEach(function(element){
+      //   if(element==null){
+      //     alert("please make sure all the items are selected ")
+      //   }
+      // })
+
+      this.FromDate = this.dateToTimeStamp(this.FromDate)
+      this.ToDate = this.dateToTimeStamp(this.ToDate)
+
       let requestURL = `https://f7964ddhdh.execute-api.ap-southeast-1.amazonaws.com/dev/${this.bank_selected}/${this.currenecy_selected}/${this.FromDate}/${this.ToDate}`;
       axios
       .get(requestURL)
       .then((response)=>{
+        console.log(requestURL)
         this.band_info = response
-        this.chartData.rows.push({ '日期': '1/3', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 });
-        console.log(this.chartData.rows);
-        this.componentKey += 1;  
+        this.componentKey += 1;
       })
       .catch(function (error) {
         console.log(error);
       })
-    }
+    },
+
   }
 };
 </script>

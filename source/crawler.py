@@ -1,3 +1,4 @@
+import re
 import json
 import requests
 import boto3
@@ -48,11 +49,13 @@ def describeNumOfCurrency():
     return (len(td_tags))
 
 def describeCurrencyName():
-    td_tags = soup.find_all(class_="con_td td_left", id="")
+    names = soup.find_all(class_="con_td td_left", id="")
     currency_name = []
-    for td_tag in td_tags:
-        string = td_tag.string
-        currency_name.append(string)
+    for name in names:
+        #extract the dollar units
+        p = re.compile('[A-Z]{3}')
+        name = p.search(name.string).group()
+        currency_name.append(name)
     return currency_name
 
 def describeCurrencyRate():
@@ -123,7 +126,7 @@ def main():
 #describeTimeStamp()
 #describeToday()
 #describeExchangeType()
-#currency_name()
+#describeCurrencyName()
 #describeCurrencyRate()
 #getCurrencyRate()
 #appendCurrencyRate()

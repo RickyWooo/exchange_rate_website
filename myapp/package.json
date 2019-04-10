@@ -13,6 +13,7 @@
     "bootstrap-vue": "^2.0.0-rc.16",
     "core-js": "^2.6.5",
     "echarts": "^4.2.1",
+    "moment": "^2.24.0",
     "v-charts": "^1.19.0",
     "vue": "^2.6.10",
     "vuejs-datepicker": "^1.5.4"
@@ -35,7 +36,9 @@
       "plugin:vue/essential",
       "eslint:recommended"
     ],
-    "rules": {"no-console": "off"},
+    "rules": {
+      "no-console": "off"
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }
