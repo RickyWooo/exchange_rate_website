@@ -3,52 +3,46 @@
     <div style="float: left; padding: 15px;">
       <b-form-select id="form_selected" v-model="bank_selected" :options="bank_options" class="mb-2">
         <template slot="first">
-          <option :value="null" disabled>-- Please Select Bank --</option>
-        </template>
-      </b-form-select>
-    </div>
-
-    <div style="float: left;padding: 15px;">
-      <b-form-select id="form_selected" v-model="currenecy_selected" :options="currenecy_options" class="mb-2">
-        <template slot="first">
           <option :value="null" disabled>-- Please select currency --</option>
         </template>
       </b-form-select>
     </div>
 
+  <div style="float: left;padding: 15px;">
+    <b-form-select id="form_selected" v-model="currenecy_selected" :options="currenecy_options" class="mb-2">
+      <template slot="first">
+        <option :value="null" disabled>-- Please select currency --</option>
+      </template>
+    </b-form-select>
+  </div>
+
     <div style="float: left;" class="datepicker" >
-        <datepicker @selected="submitFromDate" :value="state.date" :format="customFormatter" v-model="state.date" name="from_datepicker" placeholder="--Select From Date--"></datepicker>
-        <span>{{FromDate}}</span>
+        <datepicker @selected="submitFromDate" :value="state.date" :format="customFormatter" v-model="state.date" name="from_datepicker" placeholder="-- Please select from date --"></datepicker>
     </div>
     <div style="float: left;" class="datepicker" >
-        <datepicker @selected="submitToDate" :value="state.date" :format="customFormatter" v-model="state.date2" name="to_datepicker" placeholder="--Select To Date--"></datepicker>
-        <span>{{ToDate}}</span>
+        <datepicker @selected="submitToDate" :value="state.date" :format="customFormatter" v-model="state.date2" name="to_datepicker" placeholder="-- Please select to date --"></datepicker>
     </div>
     <div>
       <br>
       <br>
       <br>
       <br>
-      <strong style="color:red"> {{chartData.rows}} </strong>
     </div>
     <div class="chart">
       <div>
         <br>
         <br>
         <br>
-        <div style="text-align:center;"><h1>Chart</h1></div>
       </div>  
       <div>
         <ve-line v-model="chartData" :data="chartData" :key="componentKey"></ve-line>
       </div>    
     </div>
   </div>
-  
 </template>
 
 <script>
 import Datepicker from "vuejs-datepicker/dist/vuejs-datepicker.esm.js";
-import * as lang from "vuejs-datepicker/src/locale";
 const axios = require('axios');
 const moment = require('moment')
 
@@ -66,8 +60,10 @@ export default {
       chartData: {
         columns: ['日期', '即期買匯', '現金買匯', '即期賣匯', '現金賣匯' ],
         rows: [
-          { '日期': '2019-02-01', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
-          { '日期': '2019-03-01', '即期買匯': 3530, '現金買匯': 3230, '即期賣匯': 3000,'現金賣匯':2500 },
+          { '日期': '02-01', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
+          { '日期': '03-01', '即期買匯': 3530, '現金買匯': 3230, '即期賣匯': 3000,'現金賣匯':2500 },
+          { '日期': '04-01', '即期買匯': 2839, '現金買匯': 3928, '即期賣匯': 3847,'現金賣匯':1928 },
+          { '日期': '05-01', '即期買匯': 7492, '現金買匯': 2983, '即期賣匯': 6392,'現金賣匯':5892 }
         ]
       },
       componentKey: 0,
@@ -101,11 +97,37 @@ export default {
         { value: 'CNY', text: '人民幣[CNY]' },
       ],
       currency:'',
-      eventMsg: null,
       state: state,
-      vModelExample: null,
-      changedMonthLog: []
     };
+  },
+  created: function () {
+    this.FromDate = moment('2019-04-10').format('YYYY-MM-DD');
+    this.FromDate = this.fromDateToTimeStamp(this.FromDate)
+    
+    let requestURL = `https://f7964ddhdh.execute-api.ap-southeast-1.amazonaws.com/dev/megabank/USD/${this.FromDate}/${this.ToDate}`;
+      axios
+      .get(requestURL)
+      .then((response)=>{
+        this.chartData.rows = []
+        this.band_info = response.data.Items
+        let raw_data = response.data.Items
+        for (let i=0;i<raw_data.length;i++){
+          //{ '日期': '1/1', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
+          let obj = {}
+          console.log(raw_data[i])
+          obj["日期"] = this.TimeStampToDate(raw_data[i]["transaction_ts"]["N"])
+          obj["即期買匯"] = raw_data[i].exchange_type.M.stock_buy.N
+          obj["現金買匯"] = raw_data[i].exchange_type.M.cash_buy.N
+          obj["即期賣匯"] = raw_data[i].exchange_type.M.stock_sell.N
+          obj["現金賣匯"] = raw_data[i].exchange_type.M.cash_sell.N
+          this.chartData.rows.push(obj)
+          console.log(obj['日期'])
+        }
+        this.componentKey += 1;
+      })
+      .catch(function (error) {
+        console.log(error);
+      })
   },
   watch: {
     bank_selected: function() {
@@ -146,7 +168,7 @@ export default {
       return ts/1000
     },
     TimeStampToDate: function(ts){
-      return  moment.unix(ts).format("YYYY-MM-DD");
+      return  moment.unix(ts).format("M/DD");
     } 
     ,
     searchExchangeRate: function(){
@@ -154,7 +176,7 @@ export default {
       // let parameter = [this.bank_selected,this.currenecy_selected,this.FromDate,this.ToDate]
       // parameter.forEach(function(element){
       //   if(element==null){
-      //     alert("please make sure all the items are selected ")
+      //     break
       //   }
       // })
 
@@ -166,7 +188,6 @@ export default {
         this.band_info = response.data.Items
         let raw_data = response.data.Items
         for (let i=0;i<raw_data.length;i++){
-          //{ '日期': '1/1', '即期買匯': 1393, '現金買匯': 1093, '即期賣匯': 1000,'現金賣匯':1200 },
           let obj = {}
           console.log(raw_data[i])
           obj["日期"] = this.TimeStampToDate(raw_data[i]["transaction_ts"]["N"])
@@ -189,10 +210,12 @@ export default {
 </script>
 
 <style>
+
 body {
-  font-family: "Helvetica Neue Light", Helvetica, sans-serif;
+  font-family: Helvetica, sans-serif;
   padding: 1em 2em 2em;
 }
+
 input,
 select {
   padding: 0.75em 0.5em;

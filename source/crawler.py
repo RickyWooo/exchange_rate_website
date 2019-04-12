@@ -5,11 +5,12 @@ import boto3
 import time
 import datetime
 from bs4 import BeautifulSoup
-
 client = boto3.client('dynamodb')
-#raw = open("index.htm", "r").read()
-raw = requests.get('https://wwwfile.megabank.com.tw/rates2/M001/viewF_new_02_02.asp')
-soup = BeautifulSoup(raw, 'html.parser')
+
+
+requestURL = 'https://wwwfile.megabank.com.tw/rates2/M001/viewF_new_02_02.asp'
+raw = requests.get(requestURL)
+soup = BeautifulSoup(raw.text,features="lxml")
 
 ItemTemplate = {  
     "transaction_ts":
@@ -50,10 +51,10 @@ def describeNumOfCurrency():
     return (len(td_tags))
 
 def describeCurrencyName():
-    names = soup.find_all(class_="con_td td_left", id="")
+    names = soup.find_all('td',class_="con_td td_left", id="")
     currency_name = []
     for name in names:
-        #extract the dollar units
+        # extract the dollar units
         p = re.compile('[A-Z]{3}')
         name = p.search(name.string).group()
         currency_name.append(name)
@@ -127,7 +128,7 @@ def main():
 #describeTimeStamp()
 #describeToday()
 #describeExchangeType()
-#describeCurrencyName()
+describeCurrencyName()
 #describeCurrencyRate()
 #getCurrencyRate()
 #appendCurrencyRate()
