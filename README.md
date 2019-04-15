@@ -4,7 +4,7 @@
 [Demo](http://my-first-vue-crawler-app-exchangerate-website.s3-website-ap-southeast-1.amazonaws.com/)
 
 ## Architecture
-![](https://drive.google.com/file/d/1LQ0a91YZ_t8xTuk6-ArbD_ZPW_st6zrQ/view?usp=sharing)
+![](https://github.com/RickyWooo/exchange_rate_website/blob/master/archi.png)
 
 ## Introduction
 
