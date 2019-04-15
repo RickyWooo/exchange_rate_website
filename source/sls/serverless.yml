@@ -1,0 +1,21 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+service: my-lambda-cralwer-cron # NOTE: update this with your service name
+
+provider:
+  name: aws
+  stage: test
+  runtime: python2.7
+  region: ap-southeast-1
+
+package:
+  artifact: ./package.zip
+
+functions:
+  crawl:
+    handler: handler.crawler
+    events:
+      - schedule: cron(0/10 * * * ? *)

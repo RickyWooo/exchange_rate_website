@@ -11,6 +11,7 @@ requestURL = 'https://wwwfile.megabank.com.tw/rates2/M001/viewF_new_02_02.asp'
 raw = requests.get(requestURL)
 soup = BeautifulSoup(raw.text,"html.parser")
 
+
 ItemTemplate = {  
     "transaction_ts":
         {"N":"1554709588"},
@@ -33,8 +34,14 @@ ItemTemplate = {
 def describeTimeStamp():
     return(int(time.time()))
 
+def describeExchangeType():
+    td_tags = soup.find_all(class_="head_td td_right")
+    for td_tag in td_tags:
+        string = td_tag.string
+        print(string)
+
 def describeNumOfCurrency():
-    td_tags = soup.find_all('td',class_="con_td td_left", id="")
+    td_tags = soup.find_all(class_="con_td td_left", id="")
     return (len(td_tags))
 
 def describeCurrencyName():
@@ -52,7 +59,6 @@ def describeCurrencyRate():
     rate_array = []
     for td_tag in td_tags:
         rate = td_tag.string
-        print(rate)
         if rate == '---':
             rate = '-1'
             rate_array.append(rate)
@@ -102,10 +108,14 @@ def main():
         time.sleep(3)
 
 #describeTimeStamp()
+#describeExchangeType()
 #describeCurrencyName()
 #describeCurrencyRate()
 #appendCurrencyRate()
 #describeNumOfCurrency()
-#describeRawData()
 #putItem()
 #main()
+
+def crawler(event, context):
+    main()
+    #print("helloworld, you made it")
