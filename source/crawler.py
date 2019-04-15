@@ -7,7 +7,7 @@ import datetime
 from bs4 import BeautifulSoup
 client = boto3.client('dynamodb')
 
-requestURL = 'https://wwwfile.megabank.com.tw/rates2/M001/viewF_new_02_02.asp'
+requestURL = '[url_to_be_filled]'
 raw = requests.get(requestURL)
 soup = BeautifulSoup(raw.text,"html.parser")
 
