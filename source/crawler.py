@@ -7,10 +7,9 @@ import datetime
 from bs4 import BeautifulSoup
 client = boto3.client('dynamodb')
 
-
 requestURL = 'https://wwwfile.megabank.com.tw/rates2/M001/viewF_new_02_02.asp'
 raw = requests.get(requestURL)
-soup = BeautifulSoup(raw.text,features="lxml")
+soup = BeautifulSoup(raw.text,"html.parser")
 
 ItemTemplate = {  
     "transaction_ts":
@@ -31,14 +30,8 @@ ItemTemplate = {
                 {"N": "31.1300"}}},
 }
 
-def describeRawData():
-    print(soup)
-
 def describeTimeStamp():
     return(int(time.time()))
-
-def describeToday():
-    print(datetime.date.today())
 
 def describeExchangeType():
     td_tags = soup.find_all(class_="head_td td_right")
@@ -62,18 +55,6 @@ def describeCurrencyName():
 
 def describeCurrencyRate():
     td_tags = soup.find_all(class_="con_td money_td")
-    for td_tag in td_tags:
-        rate = td_tag.string
-        if rate == '---':
-            rate = '-1'
-        elif rate.strip():
-            rate = str(rate)
-        else:
-            pass
-        print(rate)
-
-def getCurrencyRate():
-    td_tags = soup.find_all(class_="con_td money_td")
     rate_array = []
     for td_tag in td_tags:
         rate = td_tag.string
@@ -88,7 +69,7 @@ def getCurrencyRate():
     return rate_array
 
 def appendCurrencyRate():
-    currency_rate = getCurrencyRate()
+    currency_rate = describeCurrencyRate()
     exchange_type = ['stock_buy','cash_buy','stock_sell','cash_sell']
     mapping = []
     temp = {}
@@ -107,8 +88,10 @@ def putItem():
 def main():
     # collect names of currency as array (e.g. HKD,USD...)
     currency_name = describeCurrencyName()
+    print(currency_name)
     # collect rates of currency as array (e.g. {'cash_sell': u'31.1300', 'stock_buy': u'30.8000', 'cash_buy': u'30.4600', 'stock_sell': u'30.9000'})
     currency_rate = appendCurrencyRate()
+    print(currency_rate)
     i = 0
     length = describeNumOfCurrency()
 
@@ -119,18 +102,14 @@ def main():
         ItemTemplate['bank_name']['S'] = 'megabank'
         ItemTemplate['currency']['S'] = currency_name[i]
         ItemTemplate['exchange_type']['M'] = currency_rate[i]
-        #print(type(ItemTemplate['exchange_type']['M']['cash_sell']['N']))
-        #print(ItemTemplate)
         putItem()
         print("take a break...")
         time.sleep(3)
 
 #describeTimeStamp()
-#describeToday()
 #describeExchangeType()
-describeCurrencyName()
+#describeCurrencyName()
 #describeCurrencyRate()
-#getCurrencyRate()
 #appendCurrencyRate()
 #describeNumOfCurrency()
 #describeRawData()
